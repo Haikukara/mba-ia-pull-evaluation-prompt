@@ -182,7 +182,7 @@ def get_llm(model: Optional[str] = None, temperature: float = 0.0):
         temperature: Temperatura para geração (padrão: 0.0 para determinístico)
 
     Returns:
-        Instância de ChatOpenAI ou ChatGoogleGenerativeAI
+        Instância de ChatOpenAI, ChatGoogleGenerativeAI ou ChatAnthropic
 
     Raises:
         ValueError: Se provider não for suportado ou API key não configurada
@@ -196,7 +196,8 @@ def get_llm(model: Optional[str] = None, temperature: float = 0.0):
             "Preencha LLM_MODEL (e EVAL_MODEL) no .env com um modelo disponível\n"
             "na documentação oficial do provider escolhido:\n"
             "  Google -> https://ai.google.dev/gemini-api/docs/models\n"
-            "  OpenAI -> https://platform.openai.com/docs/models"
+            "  OpenAI -> https://platform.openai.com/docs/models\n"
+            "  Anthropic -> https://platform.claude.com/docs/en/about-claude/models/overview"
         )
 
     if provider == 'openai':
@@ -231,10 +232,43 @@ def get_llm(model: Optional[str] = None, temperature: float = 0.0):
             google_api_key=api_key
         )
 
+    elif provider == 'anthropic':
+        # Extensão do projeto: suporte ao Claude (Anthropic).
+        from langchain_anthropic import ChatAnthropic
+
+        api_key = os.getenv('ANTHROPIC_API_KEY')
+        if not api_key:
+            raise ValueError(
+                "ANTHROPIC_API_KEY não configurada no .env\n"
+                "Obtenha uma chave em: https://platform.claude.com/settings/keys"
+            )
+
+        # Se o modelo recusar por política, a API refaz a chamada em um modelo
+        # alternativo. Só alguns modelos aceitam (o Haiku, por exemplo, não).
+        fallback_models = ("claude-sonnet-5-5", "claude-opus-5", "claude-fable-5")
+        fallback_kwargs = {}
+        if model_name.startswith(fallback_models):
+            fallback_kwargs = {
+                "betas": ["server-side-fallback-2026-07-01"],
+                "model_kwargs": {"fallbacks": "default"},
+            }
+
+        # `temperature` não é enviada: os modelos Claude atuais (ex.: Sonnet 5.5)
+        # recusam valores diferentes do padrão com erro 400.
+        return ChatAnthropic(
+            model=model_name,
+            api_key=api_key,
+            # Limite explícito: o padrão do modelo (128K) exigiria streaming
+            max_tokens=16000,
+            # O SDK repete automaticamente em erros 429/5xx, respeitando retry-after
+            max_retries=5,
+            **fallback_kwargs,
+        )
+
     else:
         raise ValueError(
             f"Provider '{provider}' não suportado.\n"
-            f"Use 'openai' ou 'google' na variável LLM_PROVIDER do .env"
+            f"Use 'openai', 'google' ou 'anthropic' na variável LLM_PROVIDER do .env"
         )
 
 
