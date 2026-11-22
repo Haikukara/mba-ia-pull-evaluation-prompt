@@ -119,15 +119,7 @@ Avaliação aprovada (notas ≥ 0.8):
 
 ![Experimento aprovado no LangSmith](docs/images/avaliacao_aprovada.png)
 
-Dataset de avaliação com os 15 exemplos:
-
-![Dataset de avaliação](docs/images/dataset.png)
-
-Tracing detalhado de exemplos:
-
-![Tracing - exemplo simples](docs/images/tracing_1.png)
-![Tracing - exemplo médio](docs/images/tracing_2.png)
-![Tracing - exemplo complexo](docs/images/tracing_3.png)
+O dataset com os 15 exemplos, os experimentos e o tracing detalhado de cada execução podem ser vistos no link público, em [Evidências no LangSmith](#evidências-no-langsmith).
 
 ### Comparação v1 × v2
 
