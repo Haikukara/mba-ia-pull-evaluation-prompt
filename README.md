@@ -95,6 +95,24 @@ Configuração: `LLM_PROVIDER=anthropic`, `LLM_MODEL=claude-haiku-5-5`, `EVAL_MO
 | **Média** | **0.777** | **0.816** | **0.813** |
 | Status | ❌ Reprovado | ✅ Aprovado | ✅ Aprovado |
 
+### Validação com Gemini (plano pago)
+
+O mesmo prompt v2, sem nenhuma alteração, foi avaliado de novo com o Gemini, agora com créditos no plano pago, sem os limites do plano gratuito.
+
+Configuração: `LLM_PROVIDER=google`, `LLM_MODEL=gemini-3.5-flash-lite`, `EVAL_MODEL=gemini-3.5-flash-lite`.
+
+| Métrica | v2 (Gemini Flash-Lite) |
+|---|---|
+| Helpfulness | 0.91 ✓ |
+| Correctness | 0.90 ✓ |
+| F1-Score | 0.92 ✓ |
+| Clarity | 0.93 ✓ |
+| Precision | 0.89 ✓ |
+| **Média** | **0.911** |
+| Status | ✅ Aprovado |
+
+Os 15 exemplos passaram, com a menor nota individual em 0.83, e nenhuma chamada falhou por cota. O prompt é aprovado com dois provedores diferentes. As notas do Gemini ficaram cerca de 0,1 acima das do Claude Haiku, o que reforça que o avaliador pesa bastante na nota (veja os aprendizados abaixo). Uma rodada completa (60 chamadas) custou menos de US$ 0,20.
+
 ### Screenshots
 
 Avaliação aprovada (notas ≥ 0.8):
@@ -142,13 +160,14 @@ Tracing detalhado de exemplos:
 | 6 | Linha de base com Haiku nos dois papéis | Haiku / Haiku | ❌ média 0.79 |
 | **7** | **Persona "o sistema", sem números inventados, critérios por tipo de bug, menos repetição** | **Haiku / Haiku** | ✅ **0.816 e 0.813 (duas rodadas)** |
 | 8 | Ajustes extras (metas de desempenho, abertura do formato complexo) | Haiku / Haiku | ❌ F1 0.78 e 0.80, por pouco |
+| 9 | Versão 7 sem alterações, reavaliada no plano pago do Gemini | Gemini Flash-Lite / Flash-Lite | ✅ **0.911**, sem erros de cota |
 
 **Aprendizados:**
 
 - **O avaliador pesa mais que o gerador.** Com o mesmo avaliador (Sonnet), Sonnet, Haiku e Opus geraram respostas com o mesmo F1 (0.79). Já a troca de avaliador mudou bastante as notas.
 - **Pedidos genéricos de completude derrubam a Precision.** Funcionou melhor listar critérios específicos por tipo de bug.
 - **As notas variam entre rodadas.** O mesmo exemplo chegou a oscilar 0.15 entre execuções. Por isso a versão final foi escolhida por ter passado em duas rodadas, e não pela maior média isolada.
-- **O plano gratuito do Gemini não comporta a avaliação.** O limite de 15 requisições por minuto zerou notas, e o de 20 requisições por dia do Gemini Flash interrompeu uma rodada no meio.
+- **O plano gratuito do Gemini não comporta a avaliação.** O limite de 15 requisições por minuto zerou notas, e o de 20 requisições por dia do Gemini Flash interrompeu uma rodada no meio. No plano pago (créditos pré-pagos, mínimo de US$ 5), a avaliação rodou inteira sem erros.
 
 ---
 
@@ -186,7 +205,16 @@ LLM_MODEL=claude-haiku-5-5
 EVAL_MODEL=claude-haiku-5-5
 ```
 
-Para usar Gemini ou OpenAI, troque `LLM_PROVIDER` para `google` ou `openai` e preencha a chave e os modelos correspondentes.
+Para usar Gemini ou OpenAI, troque `LLM_PROVIDER` para `google` ou `openai` e preencha a chave e os modelos correspondentes. Exemplo com Gemini (validado no plano pago):
+
+```
+LLM_PROVIDER=google
+GOOGLE_API_KEY=...
+LLM_MODEL=gemini-3.5-flash-lite
+EVAL_MODEL=gemini-3.5-flash-lite
+```
+
+O plano gratuito do Gemini não comporta uma rodada completa (60 chamadas), por causa do limite de requisições por minuto e por dia.
 
 ### Execução por fase
 
